@@ -1,0 +1,7 @@
+session/
+downloads/
+.lastdone
+.lastdone.tmp
+__pycache__/
+*.pyc
+.pytest_cache/
