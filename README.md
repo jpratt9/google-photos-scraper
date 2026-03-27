@@ -2,6 +2,10 @@
 
 Bulk download your entire Google Photos library in original quality using browser automation. Built because Google killed the Photos API read scopes in March 2025 and Takeout is unreliable garbage.
 
+## Why this exists
+
+rclone for Google Photos backups has been broken since March 2025, and Google randomly bans entire Google accounts with zero recourse if their AI misclassifies something from your Google Photos account as illegal content, with zero recourse & zero human review.
+
 ## How it works
 
 Uses SeleniumBase (undetected Chrome) to automate the Google Photos web UI:
