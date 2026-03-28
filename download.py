@@ -43,6 +43,13 @@ def download_single(driver, staging_dir, downloads_dir, overwrite=False):
         try:
             known = set(staging_dir.iterdir())
             trigger_download(driver)
+            time.sleep(0.2)
+            try:
+                driver.find_element("xpath", "//div[contains(text(),'Video is still processing')]")
+                log.warning("Video still processing, skipping: %s", driver.current_url)
+                return "failed", None
+            except Exception:
+                pass
             downloaded = wait_for_download(staging_dir, DOWNLOAD_TIMEOUT, known)
             final_path = organize_file(downloaded, downloads_dir, driver, overwrite=overwrite)
             return "ok", final_path

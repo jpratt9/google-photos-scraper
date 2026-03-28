@@ -12,24 +12,41 @@ from pathlib import Path
 
 
 SESSION_DIR = Path("./session")
-DOWNLOADS_DIR = Path("./downloads")
-STAGING_DIR = Path("./downloads/.staging")
+DOWNLOADS_DIR = Path("./downloads-2")
+STAGING_DIR = Path("./downloads-2/.staging")
 LASTDONE_FILE = Path(".lastdone")
 GOOGLE_PHOTOS_URL = "https://photos.google.com"
 MAX_RETRIES = 3
 RETRY_BACKOFF_BASE = 2
 DOWNLOAD_TIMEOUT = 60
-HUMAN_DELAY_RANGE = (2.0, 5.0)
+HUMAN_DELAY_RANGE = (1.0, 3.0)
 
 
 def setup_logging():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s] [%(name)s] %(message)s",
+    log_dir = Path("./logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"download-{time.strftime('%Y%m%d-%H%M%S')}.log"
+
+    fmt = logging.Formatter(
+        "[%(asctime)s] [%(name)s] %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+
+    stdout_handler = logging.StreamHandler()
+    stdout_handler.setFormatter(fmt)
+    root.addHandler(stdout_handler)
+
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setFormatter(fmt)
+    root.addHandler(file_handler)
+
     for name in ("seleniumbase", "selenium", "urllib3", "uc", "nodriver"):
         logging.getLogger(name).setLevel(logging.WARNING)
+
+    logging.getLogger("setup").info("Logging to %s", log_file)
 
 
 def create_driver(headed, user_data_dir, download_dir):

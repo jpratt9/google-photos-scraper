@@ -1,5 +1,7 @@
 session/
 downloads/
+downloads-2/
+logs/
 .lastdone
 .lastdone.tmp
 __pycache__/
