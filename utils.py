@@ -18,6 +18,7 @@ STAGING_DIR = Path("./downloads-2/.staging")
 STAGING_DIR_BACKWARD = Path("./downloads-2/.staging-backward")
 LASTDONE_FILE = Path(".lastdone")
 LASTDONE_FILE_BACKWARD = Path("backward.lastdone")
+SKIPLIST_FILE = Path("skiplist.txt")
 GOOGLE_PHOTOS_URL = "https://photos.google.com"
 MAX_RETRIES = 3
 RETRY_BACKOFF_BASE = 2
@@ -121,6 +122,18 @@ def get_date_from_html(driver):
     except Exception:
         pass
     return 1970, 1
+
+
+def load_skiplist(skiplist_path):
+    """Load URLs to skip from a text file (one per line)."""
+    if not skiplist_path.exists():
+        return set()
+    urls = set()
+    for line in skiplist_path.read_text().splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            urls.add(clean_url(line))
+    return urls
 
 
 def file_already_downloaded(filename, downloads_dir):

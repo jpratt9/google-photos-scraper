@@ -11,10 +11,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from utils import (
     create_driver, setup_logging, read_progress, save_progress, clean_url,
-    organize_file, wait_for_download, human_delay,
+    organize_file, wait_for_download, human_delay, load_skiplist,
     SESSION_DIR, SESSION_DIR_BACKWARD, DOWNLOADS_DIR,
     STAGING_DIR, STAGING_DIR_BACKWARD,
-    LASTDONE_FILE, LASTDONE_FILE_BACKWARD,
+    LASTDONE_FILE, LASTDONE_FILE_BACKWARD, SKIPLIST_FILE,
     GOOGLE_PHOTOS_URL, MAX_RETRIES, RETRY_BACKOFF_BASE,
     DOWNLOAD_TIMEOUT,
 )
@@ -203,6 +203,9 @@ def main():
     )
 
     stats = {"downloaded": 0, "skipped": 0, "failed": 0}
+    skiplist = load_skiplist(SKIPLIST_FILE)
+    if skiplist:
+        log.info("[%s] Loaded %d URLs to skip", mode_label, len(skiplist))
 
     try:
         if args.backward:
@@ -267,6 +270,15 @@ def main():
             if not nav_ok:
                 log.error("[%s] Navigation stuck at %s", mode_label, current_url)
                 break
+
+            # Check skiplist.
+            try:
+                if clean_url(driver.current_url) in skiplist:
+                    log.info("[%s] Skipping (in skiplist): %s", mode_label, driver.current_url)
+                    stats["skipped"] += 1
+                    continue
+            except Exception:
+                pass
 
             if args.dry_run:
                 total = stats["downloaded"] + stats["skipped"] + stats["failed"] + 1

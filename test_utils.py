@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from utils import (
     clean_url,
     file_already_downloaded,
+    load_skiplist,
     organize_file,
     read_progress,
     save_progress,
@@ -129,6 +130,37 @@ class TestReadProgress:
         f.write_text("")
         with pytest.raises(ValueError):
             read_progress(f)
+
+
+class TestLoadSkiplist:
+    def test_loads_urls(self, tmp_path):
+        f = tmp_path / "skiplist.txt"
+        f.write_text("https://photos.google.com/photo/abc\nhttps://photos.google.com/photo/def\n")
+        result = load_skiplist(f)
+        assert len(result) == 2
+        assert "https://photos.google.com/photo/abc" in result
+
+    def test_ignores_comments(self, tmp_path):
+        f = tmp_path / "skiplist.txt"
+        f.write_text("# this is a comment\nhttps://photos.google.com/photo/abc\n")
+        result = load_skiplist(f)
+        assert len(result) == 1
+
+    def test_ignores_blank_lines(self, tmp_path):
+        f = tmp_path / "skiplist.txt"
+        f.write_text("\nhttps://photos.google.com/photo/abc\n\n")
+        result = load_skiplist(f)
+        assert len(result) == 1
+
+    def test_returns_empty_when_missing(self, tmp_path):
+        result = load_skiplist(tmp_path / "nope.txt")
+        assert result == set()
+
+    def test_strips_user_segment(self, tmp_path):
+        f = tmp_path / "skiplist.txt"
+        f.write_text("https://photos.google.com/u/0/photo/abc\n")
+        result = load_skiplist(f)
+        assert "https://photos.google.com/photo/abc" in result
 
 
 class TestSaveProgress:
