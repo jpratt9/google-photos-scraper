@@ -146,18 +146,8 @@ def file_already_downloaded(filename, downloads_dir):
     return False
 
 
-def organize_file(src_path, downloads_dir, driver, overwrite=False):
-    log = logging.getLogger("organize")
-
-    year, month = get_media_date(src_path)
-    if year == 1970:
-        year, month = get_date_from_html(driver)
-        if year != 1970:
-            log.info("Date from HTML: %d/%d", year, month)
-
-    dest_dir = downloads_dir / str(year) / str(month)
-    dest_dir.mkdir(parents=True, exist_ok=True)
-
+def _place_file(src_path, dest_dir, overwrite=False):
+    """Move a single file into dest_dir, handling name truncation and duplicates."""
     filename = src_path.name
     if len(filename) > 200:
         ext = src_path.suffix
@@ -174,6 +164,42 @@ def organize_file(src_path, downloads_dir, driver, overwrite=False):
 
     src_path.rename(dest)
     return dest
+
+
+def organize_file(src_path, downloads_dir, driver, overwrite=False):
+    log = logging.getLogger("organize")
+
+    # If it's a zip, extract files into the same destination folder.
+    if src_path.suffix.lower() == ".zip":
+        import zipfile
+        if zipfile.is_zipfile(src_path):
+            log.info("Got zip file: %s — extracting", src_path.name)
+            year, month = get_media_date(src_path)
+            if year == 1970:
+                year, month = get_date_from_html(driver)
+            dest_dir = downloads_dir / str(year) / str(month)
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            extracted = []
+            with zipfile.ZipFile(src_path, "r") as zf:
+                for member in zf.infolist():
+                    if member.is_dir():
+                        continue
+                    extracted_path = Path(zf.extract(member, src_path.parent))
+                    final = _place_file(extracted_path, dest_dir, overwrite=overwrite)
+                    log.info("  Extracted: %s -> %s", member.filename, final.name)
+                    extracted.append(final)
+            src_path.unlink()
+            return extracted[0] if extracted else src_path
+
+    year, month = get_media_date(src_path)
+    if year == 1970:
+        year, month = get_date_from_html(driver)
+        if year != 1970:
+            log.info("Date from HTML: %d/%d", year, month)
+
+    dest_dir = downloads_dir / str(year) / str(month)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    return _place_file(src_path, dest_dir, overwrite=overwrite)
 
 
 def wait_for_download(staging_dir, timeout, known_files):

@@ -115,6 +115,46 @@ class TestOrganizeFile:
         assert result.read_bytes() == b"new"
 
 
+class TestOrganizeFileZip:
+    def test_extracts_zip_into_dest_folder(self, tmp_path):
+        import zipfile
+
+        # Create a zip with two files.
+        staging = tmp_path / "staging"
+        staging.mkdir()
+        zip_path = staging / "photos.zip"
+        with zipfile.ZipFile(zip_path, "w") as zf:
+            zf.writestr("photo1.jpg", b"\xff\xd8\xff")
+            zf.writestr("photo2.jpg", b"\xff\xd8\xff")
+
+        downloads = tmp_path / "downloads"
+        downloads.mkdir()
+
+        driver = MagicMock()
+        with patch("utils.get_media_date", return_value=(2024, 6)), \
+             patch("utils.get_date_from_html", return_value=(2024, 6)):
+            result = organize_file(zip_path, downloads, driver)
+
+        assert (downloads / "2024" / "6" / "photo1.jpg").exists()
+        assert (downloads / "2024" / "6" / "photo2.jpg").exists()
+        assert not zip_path.exists()  # zip deleted after extraction
+
+    def test_non_zip_with_zip_extension_treated_normally(self, tmp_path):
+        staging = tmp_path / "staging"
+        staging.mkdir()
+        fake_zip = staging / "notazip.zip"
+        fake_zip.write_bytes(b"this is not a zip")
+
+        downloads = tmp_path / "downloads"
+        downloads.mkdir()
+
+        driver = MagicMock()
+        with patch("utils.get_media_date", return_value=(2024, 6)):
+            result = organize_file(fake_zip, downloads, driver)
+
+        assert result == downloads / "2024" / "6" / "notazip.zip"
+
+
 class TestReadProgress:
     def test_reads_url(self, tmp_path):
         f = tmp_path / ".lastdone"

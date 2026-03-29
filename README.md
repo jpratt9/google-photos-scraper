@@ -18,7 +18,8 @@ Uses SeleniumBase (undetected Chrome) to automate the Google Photos web UI:
 
 ```bash
 pip install seleniumbase
-python setup.py          # opens browser, log into Google Photos, close when done
+python setup.py              # opens browser, log into Google Photos, close when done
+python setup.py --backward   # set up a second browser profile for backward worker
 ```
 
 ## Usage
@@ -33,6 +34,10 @@ python download.py --headed
 # Run headless
 python download.py
 
+# Run both workers simultaneously (2x speed)
+python download.py --headed &             # forward: oldest -> newest
+python download.py --headed --backward &  # backward: newest -> oldest
+
 # Dry run (navigate without downloading)
 python download.py --dry-run --headed
 ```
@@ -41,9 +46,13 @@ python download.py --dry-run --headed
 
 - Original quality downloads via Shift+D keyboard shortcut
 - EXIF metadata date extraction (falls back to HTML parsing)
-- Organized output: `downloads/year/month/filename.jpg`
-- Resume support via `.lastdone` checkpoint file
+- Organized output: `downloads-2/year/month/filename.jpg`
+- Resume support via `.lastdone` / `backward.lastdone` checkpoint files
+- Two-worker mode: `--backward` flag runs a second browser (newest to oldest)
+- Auto-extracts zip files returned by Google Photos into the correct folder
+- Skip list: add URLs to `skiplist.txt` to skip specific photos/videos
 - Retry logic: 3 attempts per photo with exponential backoff
-- Human-realistic random delays (2-5s between downloads)
+- Human-realistic random delays (1-3s between downloads)
+- Error resilience: Chrome timeouts don't crash the script
 - Ctrl+C safe (saves progress on interrupt)
-- Handles both photos and videos
+- Handles photos, videos, and zip bundles
