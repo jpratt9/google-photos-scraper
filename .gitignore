@@ -1,9 +1,12 @@
 session/
+session-backward/
 downloads/
 downloads-2/
 logs/
 .lastdone
 .lastdone.tmp
+backward.lastdone
+backward.lastdone.tmp
 __pycache__/
 *.pyc
 .pytest_cache/

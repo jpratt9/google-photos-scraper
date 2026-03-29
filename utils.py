@@ -12,9 +12,12 @@ from pathlib import Path
 
 
 SESSION_DIR = Path("./session")
+SESSION_DIR_BACKWARD = Path("./session-backward")
 DOWNLOADS_DIR = Path("./downloads-2")
 STAGING_DIR = Path("./downloads-2/.staging")
+STAGING_DIR_BACKWARD = Path("./downloads-2/.staging-backward")
 LASTDONE_FILE = Path(".lastdone")
+LASTDONE_FILE_BACKWARD = Path("backward.lastdone")
 GOOGLE_PHOTOS_URL = "https://photos.google.com"
 MAX_RETRIES = 3
 RETRY_BACKOFF_BASE = 2
@@ -120,6 +123,16 @@ def get_date_from_html(driver):
     return 1970, 1
 
 
+def file_already_downloaded(filename, downloads_dir):
+    """Check if a file with this name already exists anywhere in downloads."""
+    for dirpath, _, filenames in os.walk(downloads_dir):
+        if os.path.basename(dirpath).startswith(".staging"):
+            continue
+        if filename in filenames:
+            return True
+    return False
+
+
 def organize_file(src_path, downloads_dir, driver, overwrite=False):
     log = logging.getLogger("organize")
 
@@ -140,10 +153,10 @@ def organize_file(src_path, downloads_dir, driver, overwrite=False):
     dest = dest_dir / filename
 
     if not overwrite:
-        counter = 1
+        counter = 2
         while dest.exists():
             stem = src_path.stem[:200]
-            dest = dest_dir / f"{stem}_{counter}{src_path.suffix}"
+            dest = dest_dir / f"{stem} {counter}{src_path.suffix}"
             counter += 1
 
     src_path.rename(dest)
